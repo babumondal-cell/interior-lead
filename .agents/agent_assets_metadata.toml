@@ -1,0 +1,56 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "wzyAWAjdXrdXBfREwGXlD"
+uri = "file://artifacts/interior-design/public/images/hero.png"
+type = "image"
+title = "hero living room"
+
+[[generated]]
+id = "_45K5CtFZr4RjFpuikhZu"
+uri = "file://artifacts/interior-design/public/images/style-modern.png"
+type = "image"
+title = "modern style"
+
+[[generated]]
+id = "BmTuxPS1zaY1kfUIKFIW2"
+uri = "file://artifacts/interior-design/public/images/style-contemporary.png"
+type = "image"
+title = "contemporary style"
+
+[[generated]]
+id = "SatRAlpvKXyTsOS7ZHz7T"
+uri = "file://artifacts/interior-design/public/images/style-traditional.png"
+type = "image"
+title = "traditional style"
+
+[[generated]]
+id = "IbhfefRote2RygyfVTnjT"
+uri = "file://artifacts/interior-design/public/images/style-scandinavian.png"
+type = "image"
+title = "scandinavian style"
+
+[[generated]]
+id = "jw_FG_SOM8zccQmcoSyfN"
+uri = "file://artifacts/interior-design/public/images/style-industrial.png"
+type = "image"
+title = "industrial style"
+
+[[generated]]
+id = "d1m4_Lm364ziA9WLBhyae"
+uri = "file://artifacts/interior-design/public/images/style-bohemian.png"
+type = "image"
+title = "bohemian style"
+
+[[generated]]
+id = "-DemqXDTUJ3X_nZrhO5Tg"
+uri = "file://artifacts/interior-design/public/images/style-minimalist.png"
+type = "image"
+title = "minimalist style"
+
+[[generated]]
+id = "xVRXbZqEiwNm5WKeH0O1i"
+uri = "file://artifacts/interior-design/public/images/style-mid-century.png"
+type = "image"
+title = "mid-century style"

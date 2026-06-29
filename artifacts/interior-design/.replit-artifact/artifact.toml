@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Interior Design Studio"
+version = "1.0.0"
+id = "artifacts/interior-design"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19684
+
+[services.development]
+run = "pnpm --filter @workspace/interior-design run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/interior-design", "run", "build" ]
+publicDir = "artifacts/interior-design/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19684"
+BASE_PATH = "/"

@@ -1,15 +1,16 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Interior Design Studio API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: leads
+    description: Lead form submission operations
 paths:
   /healthz:
     get:
@@ -24,6 +25,86 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /leads:
+    post:
+      operationId: submitLead
+      tags: [leads]
+      summary: Submit lead form
+      description: Submit a complete multistep lead form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadInput"
+      responses:
+        "201":
+          description: Lead submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      operationId: getLeads
+      tags: [leads]
+      summary: List all leads
+      description: Get all submitted leads
+      responses:
+        "200":
+          description: List of leads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lead"
+
+  /leads/{id}:
+    get:
+      operationId: getLead
+      tags: [leads]
+      summary: Get a single lead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lead details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "404":
+          description: Lead not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /leads/stats:
+    get:
+      operationId: getLeadStats
+      tags: [leads]
+      summary: Get lead statistics
+      description: Summary counts by style, budget, and room type
+      responses:
+        "200":
+          description: Lead statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +115,138 @@ components:
       required:
         - status
 
+    LeadInput:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - phone
+        - projectType
+        - roomTypes
+        - budget
+        - timeline
+        - style
+        - squareFootage
+        - description
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        projectType:
+          type: string
+          enum: [new_construction, renovation, redecoration]
+        roomTypes:
+          type: array
+          items:
+            type: string
+        budget:
+          type: string
+          enum: [under_10k, 10k_25k, 25k_50k, 50k_100k, over_100k]
+        timeline:
+          type: string
+          enum: [immediately, 1_3_months, 3_6_months, 6_12_months, flexible]
+        style:
+          type: string
+          enum: [modern, contemporary, traditional, scandinavian, industrial, bohemian, minimalist, mid_century]
+        squareFootage:
+          type: ["integer", "null"]
+        description:
+          type: string
+        hearAboutUs:
+          type: ["string", "null"]
+
+    Lead:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - phone
+        - projectType
+        - roomTypes
+        - budget
+        - timeline
+        - style
+        - squareFootage
+        - description
+        - createdAt
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        projectType:
+          type: string
+        roomTypes:
+          type: array
+          items:
+            type: string
+        budget:
+          type: string
+        timeline:
+          type: string
+        style:
+          type: string
+        squareFootage:
+          type: ["integer", "null"]
+        description:
+          type: string
+        hearAboutUs:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    LeadStats:
+      type: object
+      required:
+        - totalLeads
+        - byStyle
+        - byBudget
+        - byProjectType
+      properties:
+        totalLeads:
+          type: integer
+        byStyle:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatCount"
+        byBudget:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatCount"
+        byProjectType:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatCount"
+
+    StatCount:
+      type: object
+      required:
+        - label
+        - count
+      properties:
+        label:
+          type: string
+        count:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
