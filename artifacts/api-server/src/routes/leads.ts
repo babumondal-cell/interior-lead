@@ -2,6 +2,8 @@ import { Router } from "express";
 import { db, leadsTable } from "@workspace/db";
 import { SubmitLeadBody } from "@workspace/api-zod";
 import { eq, sql } from "drizzle-orm";
+import { createGhlContact } from "../lib/ghl";
+import { submitBoberdooLead } from "../lib/boberdoo";
 
 const router = Router();
 
@@ -31,9 +33,43 @@ router.post("/leads", async (req, res) => {
     })
     .returning();
 
+  const leadPayload = {
+    firstName: lead.firstName,
+    lastName: lead.lastName,
+    email: lead.email,
+    phone: lead.phone,
+    projectType: lead.projectType,
+    roomTypes: lead.roomTypes,
+    budget: lead.budget,
+    timeline: lead.timeline,
+    style: lead.style,
+    squareFootage: lead.squareFootage,
+    description: lead.description,
+    hearAboutUs: lead.hearAboutUs,
+  };
+
+  const [ghlResult, boberdooResult] = await Promise.allSettled([
+    createGhlContact(leadPayload),
+    submitBoberdooLead(leadPayload),
+  ]);
+
+  const integrations = {
+    ghl:
+      ghlResult.status === "fulfilled"
+        ? ghlResult.value
+        : { success: false, error: String(ghlResult.reason) },
+    boberdoo:
+      boberdooResult.status === "fulfilled"
+        ? boberdooResult.value
+        : { success: false, error: String(boberdooResult.reason) },
+  };
+
+  req.log.info({ integrations }, "Lead integration results");
+
   return res.status(201).json({
     ...lead,
     createdAt: lead.createdAt.toISOString(),
+    integrations,
   });
 });
 

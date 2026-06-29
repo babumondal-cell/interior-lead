@@ -1,7 +1,5 @@
 import { logger } from "./logger";
 
-const BOBERDOO_BASE = "https://www.boberdoo.com/index.php";
-
 function budgetToRange(budget: string): { min: string; max: string } {
   const map: Record<string, { min: string; max: string }> = {
     under_10k: { min: "0", max: "10000" },
@@ -40,41 +38,47 @@ export async function submitBoberdooLead(lead: {
 }): Promise<{ success: boolean; leadId?: string; error?: string }> {
   const apiKey = process.env.BOBERDOO_API_KEY;
   const srcId = process.env.BOBERDOO_SRC_ID;
+  const subdomain = process.env.BOBERDOO_SUBDOMAIN;
 
   if (!apiKey || !srcId) {
     logger.warn("Boberdoo credentials not configured — skipping Boberdoo sync");
     return { success: false, error: "Boberdoo credentials not configured" };
   }
 
+  if (!subdomain) {
+    logger.warn("BOBERDOO_SUBDOMAIN not set — skipping Boberdoo sync");
+    return { success: false, error: "BOBERDOO_SUBDOMAIN not configured" };
+  }
+
   const { min, max } = budgetToRange(lead.budget);
 
   const params = new URLSearchParams({
-    KEY: apiKey,
-    TYPE: "lead",
+    Key: apiKey,
     SRC: srcId,
-    FIRST_NAME: lead.firstName,
-    LAST_NAME: lead.lastName,
-    EMAIL: lead.email,
-    PHONE: lead.phone,
-    LEAD_TYPE: "Home Interior Design",
-    PROJECT_TYPE: lead.projectType,
-    ROOMS: lead.roomTypes.join(", "),
-    BUDGET_MIN: min,
-    BUDGET_MAX: max,
-    TIMELINE: timelineLabel(lead.timeline),
-    DESIGN_STYLE: lead.style,
-    SQUARE_FOOTAGE: lead.squareFootage ? String(lead.squareFootage) : "",
-    COMMENTS: lead.description,
-    HOW_HEARD: lead.hearAboutUs ?? "",
-    TCPA_OPTIN: "1",
-    TCPA_OPTIN_DATE: new Date().toISOString(),
-    TCPA_OPTIN_URL: "lumiere-interiors.replit.app",
+    First_Name: lead.firstName,
+    Last_Name: lead.lastName,
+    Email: lead.email,
+    Phone: lead.phone,
+    Project_Type: lead.projectType,
+    Rooms: lead.roomTypes.join(", "),
+    Budget_Min: min,
+    Budget_Max: max,
+    Timeline: timelineLabel(lead.timeline),
+    Design_Style: lead.style,
+    Square_Footage: lead.squareFootage ? String(lead.squareFootage) : "",
+    Comments: lead.description,
+    How_Heard: lead.hearAboutUs ?? "",
+    TCPA_Optin: "1",
+    TCPA_Optin_Date: new Date().toISOString(),
   });
 
+  const url = `https://${subdomain}.leadportal.com/api.php`;
+
   try {
-    const response = await fetch(`${BOBERDOO_BASE}?${params.toString()}`, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
     });
 
     const text = await response.text();
@@ -84,16 +88,23 @@ export async function submitBoberdooLead(lead: {
       return { success: false, error: `Boberdoo error ${response.status}: ${text}` };
     }
 
-    const leadIdMatch = text.match(/<LEAD_ID>(.*?)<\/LEAD_ID>/);
-    const errorMatch = text.match(/<ERROR>(.*?)<\/ERROR>/);
+    const statusMatch = text.match(/<status>(.*?)<\/status>/i);
+    const leadIdMatch = text.match(/<lead_id>(.*?)<\/lead_id>/i);
+    const errorMatch = text.match(/<error>(.*?)<\/error>/i);
 
-    if (errorMatch?.[1]) {
-      logger.error({ boberdooError: errorMatch[1] }, "Boberdoo returned an error");
+    if (errorMatch?.[1] && errorMatch[1].trim()) {
+      logger.error({ boberdooError: errorMatch[1], body: text }, "Boberdoo returned an error");
       return { success: false, error: errorMatch[1] };
     }
 
+    const status = statusMatch?.[1] ?? "unknown";
     const leadId = leadIdMatch?.[1];
-    logger.info({ leadId, response: text }, "Boberdoo lead submitted");
+
+    if (status === "Error") {
+      return { success: false, error: `Boberdoo status: Error — ${text}` };
+    }
+
+    logger.info({ leadId, status }, "Boberdoo lead submitted");
     return { success: true, leadId };
   } catch (err) {
     logger.error({ err }, "Boberdoo request threw an exception");
