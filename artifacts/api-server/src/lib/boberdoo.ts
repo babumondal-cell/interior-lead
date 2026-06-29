@@ -38,14 +38,14 @@ export async function submitBoberdooLead(lead: {
 }): Promise<{ success: boolean; leadId?: string; error?: string }> {
   const apiKey = process.env.BOBERDOO_API_KEY;
   const srcId = process.env.BOBERDOO_SRC_ID;
-  const subdomain = process.env.BOBERDOO_SUBDOMAIN;
+  const subdomainRaw = process.env.BOBERDOO_SUBDOMAIN;
 
   if (!apiKey || !srcId) {
     logger.warn("Boberdoo credentials not configured — skipping Boberdoo sync");
     return { success: false, error: "Boberdoo credentials not configured" };
   }
 
-  if (!subdomain) {
+  if (!subdomainRaw) {
     logger.warn("BOBERDOO_SUBDOMAIN not set — skipping Boberdoo sync");
     return { success: false, error: "BOBERDOO_SUBDOMAIN not configured" };
   }
@@ -72,7 +72,10 @@ export async function submitBoberdooLead(lead: {
     TCPA_Optin_Date: new Date().toISOString(),
   });
 
-  const url = `https://${subdomain}.leadportal.com/api.php`;
+  // Accept either a full URL or just the subdomain name
+  const url = subdomainRaw.startsWith("http")
+    ? subdomainRaw
+    : `https://${subdomainRaw}.leadportal.com/api.php`;
 
   try {
     const response = await fetch(url, {
